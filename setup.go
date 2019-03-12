@@ -27,7 +27,7 @@ func setup(c *caddy.Controller) error {
 	}
 
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
-		k.Next = next
+		n.Next = next
 		return k
 	})
 
@@ -70,8 +70,18 @@ func ParseStanza(c *caddy.Controller) (*Network, error) {
 			network.Zones[i] = plugin.Host(c.ServerBlockKeys[i]).Normalize()
 		}
 	}
-	for c.NextBlock {
 
+	for c.NextBlock() {
+		switch c.Val() {
+		case "endpoint":
+			args := c.RemainingArgs()
+			if len(args) == 0 {
+				return nil, c.ArgErr()
+			}
+			network.Endpoints = args
+		default:
+			return nil, c.Errf("unknown property '%s'", c.Val())
+		}
 	}
 	return network, nil
 }
