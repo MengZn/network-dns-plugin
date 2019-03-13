@@ -2,6 +2,7 @@ package network
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/coredns/coredns/core/dnsserver"
@@ -13,6 +14,7 @@ import (
 var log = clog.NewWithPlugin("network")
 
 func init() {
+	fmt.Printf("network dns setup!!!!\n")
 	caddy.RegisterPlugin("network", caddy.Plugin{
 		ServerType: "dns",
 		Action:     setup,
@@ -20,6 +22,7 @@ func init() {
 }
 
 func setup(c *caddy.Controller) error {
+	fmt.Printf("network dns is in setup function !!!!\n")
 	os.Stderr = os.Stdout
 
 	n, err := networkParse(c)
@@ -29,7 +32,7 @@ func setup(c *caddy.Controller) error {
 
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
 		n.Next = next
-		return k
+		return n
 	})
 
 	return nil
@@ -47,6 +50,7 @@ func networkParse(c *caddy.Controller) (*Network, error) {
 			return nil, plugin.ErrOnce
 		}
 		i++
+		fmt.Printf("network dns is in networkParse function !!!!\n")
 
 		network, err = ParseStanza(c)
 		if err != nil {
@@ -55,50 +59,54 @@ func networkParse(c *caddy.Controller) (*Network, error) {
 	}
 	return network, nil
 }
-func ParseStanza(c *caddy.Controller) (*Network, error) {/*
+func ParseStanza(c *caddy.Controller) (*Network, error) {
+	fmt.Printf("network dns is in ParseStanza function !!!!\n")
+
 	network := New([]string{""})
 	zones := c.RemainingArgs()
 	network.Ctx = context.Background()
-	//todo
 	if len(zones) != 0 {
 		network.Zones = zones
-		for i := 0; i < len(k8s.Zones); i++ {
-			network.Zones[i] = plugin.Host(k8s.Zones[i]).Normalize()
+		for i := 0; i < len(network.Zones); i++ {
+			network.Zones[i] = plugin.Host(network.Zones[i]).Normalize()
+			fmt.Printf("the len is 0 \n")
+			fmt.Printf("%v\n", plugin.Host(network.Zones[i]).Normalize())
 		}
 	} else {
 		network.Zones = make([]string, len(c.ServerBlockKeys))
 		for i := 0; i < len(c.ServerBlockKeys); i++ {
 			network.Zones[i] = plugin.Host(c.ServerBlockKeys[i]).Normalize()
+			fmt.Printf("the len is not 0 \n")
+			fmt.Printf("%v\n", plugin.Host(c.ServerBlockKeys[i]).Normalize())
 		}
 	}
-
 	for c.NextBlock() {
 		switch c.Val() {
 		case "path":
-			args := c.RemainingArgs()
-			if len(args) == 0 {
+			if !c.NextArg() {
 				return nil, c.ArgErr()
 			}
-			etc.PathPrefix = args
+			fmt.Printf("%v\n", c.Val())
+			network.PathPrefix = c.Val()
 		case "endpoint":
 			args := c.RemainingArgs()
 			if len(args) == 0 {
 				return nil, c.ArgErr()
 			}
+			fmt.Printf("%v\n", args)
 			network.Endpoints = args
 		default:
 			return nil, c.Errf("unknown property '%s'", c.Val())
 		}
 	}
-	client, err := newEtcdClient(endpoints, nil, "", "")
+	client, err := newEtcdClient(network.Endpoints, nil, "", "")
 	// todo
 	// client, err := newEtcdClient(endpoints, tlsConfig, username, password)
 	if err != nil {
-		return nil, c.Errf("etcd client init fail '%s'", err)
+		return nil, c.Errf("etcd client init fail '%v'", err)
 	}
 	network.Client = client
 	return network, nil
-	*/
 }
 
 const defaultEndpoint = "http://localhost:8888"
