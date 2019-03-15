@@ -3,14 +3,11 @@ package network
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"time"
 
 	"github.com/coredns/coredns/plugin"
-	"github.com/coredns/coredns/plugin/etcd/msg"
-	"github.com/coredns/coredns/plugin/pkg/upstream"
-	"github.com/coredns/coredns/request"
 	etcdcv3 "github.com/coreos/etcd/clientv3"
-	"github.com/miekg/dns"
 )
 
 const (
@@ -19,10 +16,12 @@ const (
 	etcdTimeout = 5 * time.Second
 )
 
+var errKeyNotFound = errors.New("key not found")
+var errParse = errors.New("parse etcd fail")
+
 type Network struct {
 	Next       plugin.Handler
 	Zones      []string
-	Upstream   *upstream.Upstream
 	Endpoints  []string
 	PathPrefix string
 	Ctx        context.Context
@@ -48,30 +47,6 @@ func newEtcdClient(endpoints []string, cc *tls.Config, username, password string
 	if err != nil {
 		return nil, err
 	}
+
 	return cli, nil
-}
-
-//Services implements the ServiceBackend interface.
-func (n *Network) Services(state request.Request, exact bool, opt Options) ([]msg.Service, error) {
-
-}
-
-//Reverse implements the ServiceBackend interface.
-func (n *Network) Reverse(state request.Request, exact bool, opt Options) ([]msg.Service, error) {
-
-}
-
-//Lookup implements the ServiceBackend interface.
-func (n *Network) Lookup(state request.Request, name string, typ uint16) (*dns.Msg, error) {
-
-}
-
-//Records implements the ServiceBackend interface.
-func (n *Network) Records(state request.Request, exact bool) ([]msg.Service, error) {
-
-}
-
-//IsNameError implements the ServiceBackend interface.
-func (n *Network) IsNameError(err error) bool {
-
 }
