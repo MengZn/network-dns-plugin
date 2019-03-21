@@ -16,6 +16,7 @@ func (n *Network) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 
 	path, _ := msg.PathWithWildcard(state.Name(), n.PathPrefix)
 	res, err := n.get(path)
+
 	if err != nil {
 		return 0, errKeyNotFound
 	}
